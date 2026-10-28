@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-lyra",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@zyk-admin-ai/ui/components",
+    "utils": "@zyk-admin-ai/ui/lib/utils",
+    "hooks": "@zyk-admin-ai/ui/hooks",
+    "lib": "@zyk-admin-ai/ui/lib",
+    "ui": "@zyk-admin-ai/ui/components"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}

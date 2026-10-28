@@ -1,0 +1,6 @@
+{
+  "extends": "@zyk-admin-ai/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  }
+}
