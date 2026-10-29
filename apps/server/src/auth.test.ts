@@ -17,6 +17,13 @@ const signUp = (body: Record<string, unknown>) =>
 		method: "POST",
 	});
 
+const signIn = (body: Record<string, unknown>) =>
+	app.request("/api/auth/sign-in/username", {
+		body: JSON.stringify(body),
+		headers: { "Content-Type": "application/json", Origin: WEB_ORIGIN },
+		method: "POST",
+	});
+
 const errorCode = async (res: Response): Promise<string | undefined> => {
 	const body = (await res.json()) as { code?: string };
 	return body.code;
@@ -114,5 +121,50 @@ describe("POST /api/auth/sign-up/email", () => {
 			where: { username: username.toLowerCase() },
 		});
 		expect(count).toBe(1);
+	});
+});
+
+describe("POST /api/auth/sign-in/username", () => {
+	it.each([
+		["the original case", (name: string) => name],
+		["lower case", (name: string) => name.toLowerCase()],
+		["upper case", (name: string) => name.toUpperCase()],
+	])("signs in with the username in %s", async (_label, toInput) => {
+		const username = uniqueUsername("Alice");
+		await signUp({ password: VALID_PASSWORD, username });
+
+		const res = await signIn({
+			password: VALID_PASSWORD,
+			username: toInput(username),
+		});
+
+		expect(res.status).toBe(200);
+		expect(res.headers.get("set-cookie")).toContain(SESSION_COOKIE);
+	});
+
+	it("rejects a wrong password and an unknown username identically", async () => {
+		const username = uniqueUsername("Carol");
+		await signUp({ password: VALID_PASSWORD, username });
+
+		const wrongPassword = await signIn({
+			password: "wrong-password",
+			username,
+		});
+		const unknownUser = await signIn({
+			password: VALID_PASSWORD,
+			username: uniqueUsername("ghost"),
+		});
+
+		expect(wrongPassword.status).toBe(401);
+		expect(unknownUser.status).toBe(401);
+		expect(wrongPassword.headers.get("set-cookie")).toBeNull();
+		const codes = [
+			await errorCode(wrongPassword),
+			await errorCode(unknownUser),
+		];
+		expect(codes).toEqual([
+			"INVALID_USERNAME_OR_PASSWORD",
+			"INVALID_USERNAME_OR_PASSWORD",
+		]);
 	});
 });

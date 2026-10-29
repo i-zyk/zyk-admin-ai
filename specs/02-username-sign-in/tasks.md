@@ -12,8 +12,9 @@
   - [✅] 2.2 登录、注册表单去掉 `useSession` 驱动的整页 Loader
   - 对应验收标准：R02-AC7
   - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
-- [ ] 3. 编写服务端登录接口测试（`apps/server/src/auth.test.ts`）：注册 `Alice` 后以 `Alice`、`alice`、`ALICE` 登录均返回 200 且带会话 Cookie；错误密码与不存在用户名均返回 401 且错误码相同
+- [✅] 3. 编写服务端登录接口测试（`apps/server/src/auth.test.ts`）：注册 `Alice` 后以 `Alice`、`alice`、`ALICE` 登录均返回 200 且带会话 Cookie；错误密码与不存在用户名均返回 401 且错误码相同
   - 对应验收标准：R02-AC3 ~ R02-AC5
+  - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
 - [ ] 4. 编写登录 E2E 测试（`apps/web/e2e/sign-in.spec.ts`）：表单只有用户名、密码两个输入框；空提交显示必填提示且不发请求；正确凭据登录跳转 `/dashboard`；大写用户名登录成功；错误密码和不存在用户名都提示「用户名或密码错误」并停留在 `/login`；登录后 `page.reload()` 仍在 `/dashboard` 且显示内容；已登录访问 `/login` 被重定向到 `/dashboard`；挂起请求时按钮禁用且多次点击只发 1 次请求；模拟网络中断提示「网络异常，请稍后重试」，恢复后可再次登录成功
   - 对应验收标准：R02-AC1 ~ R02-AC9
 - [ ] 5. 自测并对照 requirements.md 逐条验收
