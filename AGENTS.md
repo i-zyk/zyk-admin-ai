@@ -394,3 +394,4 @@ Most formatting and common issues are automatically fixed by Biome. Run `pnpm ex
 - [2026-10-29][R03] E2E 需要改数据库时（如让会话过期），用 `apps/web/e2e/support.ts` 的 `expireSessionsOf`：在 `packages/db` 下执行 `pnpm exec prisma db execute --stdin`，由其 `prisma.config.ts` 经 varlock 加载 `DATABASE_URL`，web 不必新增数据库依赖。
 - [2026-10-29][R03] Header 未登录按钮与登录表单提交按钮同名「登录」，E2E 按角色定位表单按钮时要限定在 `page.locator("form")` 内，否则会触发 Playwright 严格模式冲突。
 
+- [2026-10-29][通用] 不要在 `node_modules/.pnpm/<包>/node_modules/<包>` 目录里执行任何 pnpm 命令（例如为了读 `next/dist/docs` 而 cd 进去后忘了切回）：pnpm 会把该包当成独立项目，在包内生成 `pnpm-lock.yaml` 和嵌套 `node_modules`，从而遮蔽 workspace 的 override（曾导致 `next` 加载原版 `@next/env`，web 启动时报 `__VARLOCK_ENV is not set`）。读依赖源码时用绝对路径，执行 pnpm 前先 `cd` 回仓库根目录；如已污染，移走包内的 `node_modules` 和 `pnpm-lock.yaml` 即可。
