@@ -9,7 +9,6 @@ import { authClient } from "@/lib/auth-client";
 import { signUpErrorMessage } from "@/lib/auth-errors";
 
 import FormTextField from "./form-text-field";
-import Loader from "./loader";
 
 const selectSubmitState = (state: {
 	canSubmit: boolean;
@@ -25,7 +24,6 @@ export default function SignUpForm({
 	onSwitchToSignIn: () => void;
 }) {
 	const router = useRouter();
-	const { isPending } = authClient.useSession();
 
 	const form = useForm({
 		defaultValues: {
@@ -63,10 +61,6 @@ export default function SignUpForm({
 		event.stopPropagation();
 		form.handleSubmit();
 	};
-
-	if (isPending) {
-		return <Loader />;
-	}
 
 	return (
 		<div className="mx-auto mt-10 w-full max-w-md p-6">

@@ -25,6 +25,7 @@ const countSignUpPosts = (page: Page): (() => number) => {
 
 const gotoSignUp = async (page: Page) => {
 	await page.goto("/login");
+	await page.getByRole("button", { name: "没有账号？去注册" }).click();
 	await expect(page.getByRole("heading", { name: "创建账号" })).toBeVisible();
 };
 

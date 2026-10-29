@@ -1,16 +1,26 @@
-"use client";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
-import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
+import AuthForms from "./auth-forms";
 
-export default function LoginPage() {
-  const [showSignIn, setShowSignIn] = useState(false);
+// An unreachable auth server is treated as signed out so the form still renders.
+async function hasActiveSession(): Promise<boolean> {
+	try {
+		const { data } = await authClient.getSession({
+			fetchOptions: { headers: await headers() },
+		});
+		return Boolean(data?.user);
+	} catch {
+		return false;
+	}
+}
 
-  return showSignIn ? (
-    <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
-  ) : (
-    <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
-  );
+export default async function LoginPage() {
+	if (await hasActiveSession()) {
+		redirect("/dashboard");
+	}
+
+	return <AuthForms />;
 }
