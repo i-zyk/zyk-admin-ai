@@ -6,7 +6,7 @@
 
 | 序号 | 需求 | 依赖 | 状态 |
 |------|------|------|------|
-| R01 | [用户名注册](01-username-sign-up/requirements.md) | 无 | - [ ] |
+| R01 | [用户名注册](01-username-sign-up/requirements.md) | 无 | - [✅] |
 | R02 | [用户名登录](02-username-sign-in/requirements.md) | R01 | - [ ] |
 | R03 | [登录后首页、退出与访问控制](03-dashboard-sign-out/requirements.md) | R01、R02 | - [ ] |
 
