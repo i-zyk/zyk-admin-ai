@@ -40,7 +40,8 @@ zyk-admin-ai/
 │   │   └── AGENTS.md                  # Next.js 子目录补充规则
 │   ├── server/                        # Hono API 服务，端口 3000
 │   │   ├── src/
-│   │   │   ├── index.ts               # HTTP 入口、日志/CORS、认证与 tRPC 路由
+│   │   │   ├── index.ts               # HTTP 入口，仅 serve(app)
+│   │   │   ├── app.ts                 # Hono 应用：日志/CORS、认证与 tRPC 路由（测试直接导入）
 │   │   │   ├── services.ts            # 创建并共享 db、auth 实例
 │   │   │   ├── context.ts             # 从请求头读取会话，构建 API Context
 │   │   │   ├── env.server.ts          # 加载 Varlock 后导出 ENV
@@ -133,6 +134,7 @@ zyk-admin-ai/
 | 文档站 | Next.js 16、Fumadocs、MDX | `apps/fumadocs`；独立内容、页面、搜索、Markdown/LLM 导出 |
 | 环境配置 | Varlock | 各应用自有 `.env.schema`；Next.js/Metro 集成及服务端启动加载 |
 | 代码质量 | Ultracite 8、Biome、严格 TypeScript | 根 Biome 使用 core/react/next 预设；文档站另有本地配置 |
+| 自动化测试 | Vitest 5、Playwright | `apps/server` 用 Vitest 通过 `app.request()` 做接口集成测试；`apps/web/e2e` 用 Playwright 做 E2E，自动启动 server 与 web |
 
 各应用的 React、Next.js、TypeScript 等版本声明并不完全一致，修改依赖前检查对应包和 lockfile，不假设整个仓库使用相同版本。
 
@@ -162,7 +164,7 @@ apps/fumadocs ──> 本地 MDX 文档源（当前未接入上述业务 API）
 ### 服务端与共享接口
 
 - `apps/server/src/services.ts` 是实例装配入口：`createPrismaClient(ENV)` 创建数据库客户端，再通过 `createAuth(ENV, db)` 创建认证实例。
-- Hono 入口挂载日志和 CORS；`GET /` 返回 `OK`，`GET/POST /api/auth/*` 委托 Better Auth，`/trpc/*` 委托 tRPC Router。
+- Hono 应用（`src/app.ts`）挂载日志和 CORS；`GET /` 返回 `OK`，`GET/POST /api/auth/*` 委托 Better Auth，`/trpc/*` 委托 tRPC Router。
 - `apps/server/src/context.ts` 用请求头调用 `auth.api.getSession()`，向 API 注入数据库和会话。`packages/api` 只定义 Context 类型，不自行加载应用环境变量。
 - `packages/api/src/index.ts` 提供公开与受保护 procedure。`protectedProcedure` 仅检查会话是否存在，失败返回 `UNAUTHORIZED`；当前未实现角色/资源级权限判断。
 - 目前 Router 只有公开的 `healthCheck` 和受保护的 `privateData`，后者返回提示及当前用户；尚无业务 CRUD 模块。
@@ -214,6 +216,8 @@ apps/fumadocs ──> 本地 MDX 文档源（当前未接入上述业务 API）
 | `pnpm --filter native ios` / `pnpm --filter native android` | 构建并运行移动端开发应用 |
 | `pnpm run build` | Turbo 执行各包已声明的 build，非所有包均有构建脚本 |
 | `pnpm run check-types` | 检查已声明 check-types 脚本的包 |
+| `pnpm run test` | Turbo 执行各包 `test`（目前为 `apps/server` 的 Vitest 集成测试，需要数据库可用） |
+| `pnpm run test:e2e` | Turbo 执行各包 `test:e2e`（目前为 `apps/web` 的 Playwright E2E，自动启动或复用 3000/3001 端口的服务） |
 | `pnpm --filter fumadocs types:check` | 文档站单独生成路由类型并检查类型，其脚本名与根任务不同 |
 | `pnpm run check` / `pnpm run fix` | Ultracite 检查 / 自动修复 |
 | `pnpm run env:generate` | 重新生成各应用及 DB 的环境类型 |
@@ -232,9 +236,10 @@ Turbo 的 `build` 依赖上游 `^build`，缓存 `dist/**` 与 `.next/**`（排�
 - 跨 Web 场景复用的基础组件放 `packages/ui/src/components`，通过 `@zyk-admin-ai/ui/components/*` 导入；主题和设计 Token 统一修改 `packages/ui/src/styles/globals.css`。
 - 新增业务接口从 `packages/api/src/routers` 扩展并注册到 `appRouter`，复用现有 procedure；Hono 入口保持 HTTP 装配职责。新增输入通过 Zod 等方式在服务端验证。
 - 数据模型放 `packages/db/prisma/schema`，共享认证配置放 `packages/auth`，实例与应用环境装配留在 `apps/server`。
-- 当前没有独立的业务 service/repository 层、RBAC、AI SDK 接入或专用测试脚本/测试框架配置；后续新增时明确职责并更新本文件，勿将预留目录或 UI 消息组件描述成完整业务实现。
+- 当前没有独立的业务 service/repository 层、RBAC、AI SDK 接入；后续新增时明确职责并更新本文件，勿将预留目录或 UI 消息组件描述成完整业务实现。
 - 文档站使用自身 Biome 配置及 `types:check` 脚本，根目录检查不等价于覆盖它的所有检查。
-- 本次核对发现根 `biome.json` 中的 `nursery.useTailwindSortedClasses` 被当前实际执行的 Biome 判定为未知配置键，导致 Ultracite 检查在加载配置时退出。处理 lint 配置时先核对安装版本与规则名称；这属于现有配置问题，本次结构文档更新未修改它。
+- 测试位置：服务端集成测试放 `apps/server/src/**/*.test.ts`，导入 `src/app.ts` 的 `app`（`src/index.ts` 只负责 `serve`）；Web E2E 放 `apps/web/e2e/*.spec.ts`。测试与开发共用 `DATABASE_URL` 指向的库，用例使用随机用户名，不依赖清库。
+- 根 `biome.json` 排除了 `.agents`、`apps/fumadocs`（有自己的配置）和 Varlock 生成的 `src/env.ts`。脚手架代码仍有数百条存量 lint/格式问题，全量 `pnpm run check` 目前不通过；新改动的文件必须单独通过 `pnpm exec biome check <文件...>`。
 - 在 `apps/web` 内修改代码前，还需阅读其 `AGENTS.md`；该文件要求先查阅当前安装的 Next.js `dist/docs/` 对应指南，再编写框架代码。
 - 保留下面已有的 Ultracite 规范。架构描述应以实际源码为准，避免把脚手架配置或未来规划当作已完成能力。
 
@@ -366,3 +371,11 @@ Biome will catch most mechanical issues automatically. Focus your attention on:
 ---
 
 Most formatting and common issues are automatically fixed by Biome. Run `pnpm exec ultracite fix` before committing to ensure compliance.
+
+## 经验与踩坑
+
+- [2026-10-29][R01] 当前 Biome 2.5 已把 `nursery.useTailwindSortedClasses` 改名为 `useSortedClasses`，且 `apps/fumadocs/biome.json` 是嵌套根配置会与根配置冲突；根配置已改名规则并排除 `apps/fumadocs`，升级 Biome/Ultracite 时先核对规则名。
+- [2026-10-29][R01] 不要在根目录直接跑全量 `pnpm exec ultracite fix`：会重排 80+ 个脚手架文件（含 `.agents` 技能脚本、生成的 `env.ts`），还会删掉 `files.includes` 的 `"**"`（ultracite 预设已含）；只对本次改动的文件执行 `pnpm exec biome check --write <文件...>`。
+- [2026-10-29][R01] Prisma Client 输出目录 `packages/db/prisma/generated/` 被忽略，新克隆或清理后必须先 `pnpm run db:generate`，否则 `check-types` 和 server 测试都会因找不到 `../prisma/generated/client` 失败。
+- [2026-10-29][R01] 本机数据库在 Docker 容器 `wizardly_bell`（需手动 `docker start`），其默认 `postgres` 库属于其他项目，本项目使用 `zyk_admin_ai` 库；不要对 `postgres` 库执行迁移或 `db push`。
+- [2026-10-29][R01] Playwright `getByText("X")` 默认是忽略大小写的子串匹配（`Connected` 会命中 `Disconnected`）；断言状态文本时加 `{ exact: true }`。
