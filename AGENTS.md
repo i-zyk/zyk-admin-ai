@@ -379,3 +379,6 @@ Most formatting and common issues are automatically fixed by Biome. Run `pnpm ex
 - [2026-10-29][R01] Prisma Client 输出目录 `packages/db/prisma/generated/` 被忽略，新克隆或清理后必须先 `pnpm run db:generate`，否则 `check-types` 和 server 测试都会因找不到 `../prisma/generated/client` 失败。
 - [2026-10-29][R01] 本机数据库在 Docker 容器 `wizardly_bell`（需手动 `docker start`），其默认 `postgres` 库属于其他项目，本项目使用 `zyk_admin_ai` 库；不要对 `postgres` 库执行迁移或 `db push`。
 - [2026-10-29][R01] Playwright `getByText("X")` 默认是忽略大小写的子串匹配（`Connected` 会命中 `Disconnected`）；断言状态文本时加 `{ exact: true }`。
+- [2026-10-29][R01] Better Auth 1.7 中 `options.hooks.before` 先于插件钩子执行，且都在端点请求体 Zod 校验之前；`/sign-up/email` 的占位 email/name 由 `packages/auth` 的 before 钩子直接写入 `ctx.body`，客户端调用 `signUp.email` 时 `email`/`name` 传空串即可。
+- [2026-10-29][R01] `pnpm run auth:generate` 会整体覆盖 `auth.prisma`（文件首行多出空行、`@@unique([username])` 追加在 `@@map` 之后），生成后检查 diff；迁移用 `cd packages/db && pnpm exec prisma migrate dev --name <名称>`（根目录 `db:migrate` 是交互式 Turbo 任务）。
+

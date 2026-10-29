@@ -32,7 +32,7 @@
 4. **Web 客户端**：`auth-client.ts` 加 `usernameClient()` 插件。注册表单改为用户名 + 密码两项，调用 `authClient.signUp.email({ username, password, email: "", name: "" })`（`email`/`name` 由服务端钩子覆盖；类型上必填，传空串）。
 5. **表单通用交互**：新增 `apps/web/src/lib/auth-errors.ts`，把 Better Auth 错误码/网络错误映射为中文提示；注册和后续登录表单共用。
 6. **测试基建**（技术参考未规定测试框架，以下方案已与用户确认）：
-   - `apps/server`：Vitest，测试文件 `src/**/*.test.ts`。为便于测试，把 Hono 应用装配从 `src/index.ts` 拆到 `src/app.ts`（导出 `app`），`index.ts` 只负责 `serve`。测试通过 `app.request()` 调真实认证接口和数据库。脚本 `test: varlock run -- vitest run`。
+   - `apps/server`：Vitest，测试文件 `src/**/*.test.ts`。为便于测试，把 Hono 应用装配从 `src/index.ts` 拆到 `src/app.ts`（导出 `app`），`index.ts` 只负责 `serve`。测试通过 `app.request()` 调真实认证接口和数据库。脚本 `test: vitest run`（`src/env.server.ts` 已 `import "varlock/auto-load"`，无需 `varlock run` 包装；实现时修正）。
    - `apps/web`：Playwright E2E，目录 `apps/web/e2e/`，`playwright.config.ts` 的 `webServer` 同时启动 server（3000）与 web（3001）。脚本 `test:e2e: playwright test`。
    - 根 `package.json` 增加 `test`、`test:e2e`，`turbo.json` 增加对应任务（不缓存）。
 7. **lint 修复**：根 `biome.json` 中 `nursery.useTailwindSortedClasses` 改为当前 Biome 支持的 `nursery.useSortedClasses`（或删除），使 `pnpm run check` 可运行。
