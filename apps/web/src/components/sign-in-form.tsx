@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
 import { signInErrorMessage } from "@/lib/auth-errors";
+import { useHydrated } from "@/lib/use-hydrated";
 
 import FormTextField from "./form-text-field";
 
@@ -24,6 +25,7 @@ export default function SignInForm({
 	onSwitchToSignUp: () => void;
 }) {
 	const router = useRouter();
+	const isHydrated = useHydrated();
 
 	const form = useForm({
 		defaultValues: {
@@ -89,7 +91,7 @@ export default function SignInForm({
 					{({ canSubmit, isSubmitting }) => (
 						<Button
 							className="w-full"
-							disabled={!canSubmit || isSubmitting}
+							disabled={!(isHydrated && canSubmit) || isSubmitting}
 							type="submit"
 						>
 							{isSubmitting ? "登录中..." : "登录"}

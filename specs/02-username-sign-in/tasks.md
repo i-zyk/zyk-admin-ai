@@ -20,3 +20,4 @@
   - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
 - [✅] 5. 自测并对照 requirements.md 逐条验收
   - CR：本任务无代码改动，跳过审查
+- 补充修复（R03 开发中发现）：任务 2 去掉 Loader 后表单在服务端直接渲染，水合前点击提交会触发原生 GET 提交，把密码带进 URL；新增 `apps/web/src/lib/use-hydrated.ts`，登录/注册按钮在水合前禁用。CR：Codex 提出 0 条

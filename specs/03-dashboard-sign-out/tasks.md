@@ -5,6 +5,7 @@
 - [✅] 1. 受保护接口调整：`packages/api/src/routers/index.ts` 的 `privateData` 返回 `{ message, username }`；检索 `apps/web`、`apps/native` 中对 `privateData` 的引用并同步修改
   - 对应验收标准：R03-AC6
   - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
+  - 测试：首次 N5 的 E2E 有 3 条不稳定失败（误在测试未通过时提交了勾选），根因是 R02 的水合前提交缺陷，修复后全量测试通过
 - [ ] 2. 编写服务端访问控制测试（`apps/server/src/access.test.ts`）：无 Cookie 调用 `privateData` 返回 401；注册后带 Cookie 调用返回原始大小写用户名；`POST /api/auth/sign-out` 后用旧 Cookie 调用返回 401；把该用户 `session.expiresAt` 改为过去时间后调用返回 401
   - 对应验收标准：R03-AC3、R03-AC5、R03-AC6
 - [ ] 3. 首页与退出

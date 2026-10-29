@@ -79,6 +79,7 @@ flowchart TD
 - 服务端获取会话失败（认证服务不可达）时，`/login` 页按未登录处理并渲染表单，不抛 500；`getSession` 不使用 `throw: true`。
 - 登录成功后若 `router.push` 前会话 Cookie 尚未写入：Better Auth 在响应里同步 `Set-Cookie`，跳转时已带上 Cookie。
 - 重复提交与网络异常处理同 R01。
+- 水合前提交（实现后补充）：表单由服务端直接渲染，水合前点击会触发浏览器原生 GET 提交并把密码写进 URL；用 `useHydrated()` 在水合前禁用提交按钮（禁用的提交按钮同时阻止回车隐式提交）。
 
 ## 风险与取舍
 
