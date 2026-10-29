@@ -16,8 +16,9 @@
   - [✅] 2.3 执行 `pnpm run auth:generate` 更新 `auth.prisma`，`pnpm run db:migrate` 生成首个迁移，`pnpm run db:generate`
   - 对应验收标准：R01-AC6、R01-AC7、R01-AC8
   - CR：Codex 提出 1 条，采纳 0 条；不采纳：P1「Web/移动端注册表单未带 username 会被拒绝」——Web 表单在本需求任务 4 改造，移动端不改已与用户确认
-- [ ] 3. 编写服务端注册接口测试（`apps/server/src/auth.test.ts`）：合法注册返回 200 且带会话 Cookie；缺少用户名、用户名过短/过长、含非法字符（如 `a.b`、`中文`）、密码少于 8 位均返回 400；已有 `Alice` 后注册 `alice` 被拒绝；数据库中 `username` 为小写、`account.password` 不等于明文
+- [✅] 3. 编写服务端注册接口测试（`apps/server/src/auth.test.ts`）：合法注册返回 200 且带会话 Cookie；缺少用户名、用户名过短/过长、含非法字符（如 `a.b`、`中文`）、密码少于 8 位均返回 400；已有 `Alice` 后注册 `alice` 被拒绝；数据库中 `username` 为小写、`account.password` 不等于明文
   - 对应验收标准：R01-AC6、R01-AC7、R01-AC8
+  - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
 - [ ] 4. Web 注册表单改造
   - [ ] 4.1 `apps/web/package.json` 增加 `@zyk-admin-ai/auth` 依赖；`auth-client.ts` 加 `usernameClient()`
   - [ ] 4.2 新增 `apps/web/src/lib/auth-errors.ts`：Better Auth 错误码与网络错误到中文提示的映射
