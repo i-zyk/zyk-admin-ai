@@ -19,7 +19,7 @@
 2. **会话获取异常**：`getSession` 不再使用 `throw: true`；请求失败或无用户都 `redirect("/login")`，避免过期/异常会话导致 500。
 3. **退出登录**：新增 `apps/web/src/app/dashboard/sign-out-button.tsx`（客户端组件），调用 `authClient.signOut()`；成功后 `router.replace("/login")` + `router.refresh()`；失败按 R01 `auth-errors.ts` 的网络异常提示；进行中禁用按钮。
 4. **Header 用户菜单**：`apps/web/src/components/user-menu.tsx` 显示用户名（不显示占位邮箱），退出后跳转 `/login`（原为 `/`），复用与退出按钮相同的退出逻辑（抽为 `apps/web/src/lib/sign-out.ts` 的 `useSignOut` hook）。
-5. **受保护接口**：`privateData` 保留 `protectedProcedure`，返回值改为 `{ username }`（不再返回整个 user 对象，避免暴露占位邮箱等字段）。`dashboard.tsx` 客户端组件可删除；首页不再依赖该接口展示内容，接口由服务端测试覆盖。
+5. **受保护接口**：`privateData` 保留 `protectedProcedure`，返回值改为 `{ message, username }`（不再返回整个 user 对象，避免暴露占位邮箱等字段；保留 `message` 以兼容移动端首页，实现时调整）。`dashboard.tsx` 客户端组件可删除；首页不再依赖该接口展示内容，接口由服务端测试覆盖。
 6. **会话过期**：Better Auth `getSession` 对 `expiresAt` 已过期的会话返回 `null`（未开启 cookieCache），因此页面和 tRPC Context 自动按未登录处理；以测试覆盖（测试中直接把 `session.expiresAt` 改为过去时间）。
 
 ## 涉及模块 / 文件
@@ -31,7 +31,7 @@
 | `apps/web/src/app/dashboard/dashboard.tsx` | 删除（模板示例） |
 | `apps/web/src/lib/sign-out.ts` | 新增：`useSignOut` hook（退出、跳转、错误提示、进行中状态） |
 | `apps/web/src/components/user-menu.tsx` | 显示用户名、退出跳转 `/login`、复用 `useSignOut` |
-| `packages/api/src/routers/index.ts` | `privateData` 返回 `{ username }` |
+| `packages/api/src/routers/index.ts` | `privateData` 返回 `{ message, username }` |
 | `apps/server/src/access.test.ts` | 新增：受保护接口与会话过期测试 |
 | `apps/web/e2e/dashboard.spec.ts` | 新增：首页、退出、访问控制 E2E |
 
@@ -42,7 +42,7 @@
 ## 接口设计
 
 - tRPC `privateData`（`protectedProcedure`，query）
-  - 有效会话：返回 `{ username: string }`（`displayUsername ?? username`）
+  - 有效会话：返回 `{ message: string; username: string }`（`username` 取 `displayUsername ?? username ?? name`）
   - 无会话 / 会话过期 / 已退出：`TRPCError({ code: "UNAUTHORIZED" })`，HTTP 401
 - Better Auth `POST /api/auth/sign-out`：删除数据库中的会话记录并清除 Cookie
 
@@ -77,5 +77,5 @@ sequenceDiagram
 
 ## 风险与取舍
 
-- **`privateData` 返回值变更**：移动端 `apps/native` 若引用 `privateData.user` 需同步修改；实现时检索引用，移动端仅做类型兼容修改，不改界面。
+- **`privateData` 返回值变更**：实现时检索到移动端 `apps/native/app/(drawer)/index.tsx` 只读取 `message`，因此保留 `message` 字段，移动端无需修改。
 - **删除 `dashboard.tsx`**：它是脚手架示例，删除后首页不再在客户端请求受保护接口；受保护接口的行为由服务端测试覆盖。
