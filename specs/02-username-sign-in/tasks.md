@@ -2,10 +2,11 @@
 
 > 完成一项后把 `- [ ]` 改为 `- [✅]`
 
-- [ ] 1. Web 登录表单改造
-  - [ ] 1.1 `auth-errors.ts` 增加登录场景映射（凭据类错误统一为「用户名或密码错误」）
-  - [ ] 1.2 `sign-in-form.tsx` 改为只有用户名、密码两项，必填校验，调用 `authClient.signIn.username`；提交中禁用按钮并显示加载文案；成功跳转 `/dashboard`；失败按映射提示；网络异常可重试
+- [✅] 1. Web 登录表单改造
+  - [✅] 1.1 `auth-errors.ts` 增加登录场景映射（凭据类错误统一为「用户名或密码错误」）
+  - [✅] 1.2 `sign-in-form.tsx` 改为只有用户名、密码两项，必填校验，调用 `authClient.signIn.username`；提交中禁用按钮并显示加载文案；成功跳转 `/dashboard`；失败按映射提示；网络异常可重试
   - 对应验收标准：R02-AC1 ~ R02-AC5、R02-AC8、R02-AC9
+  - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
 - [ ] 2. 已登录访问 `/login` 跳转
   - [ ] 2.1 新增 `apps/web/src/app/login/auth-forms.tsx`（登录/注册切换，默认登录），`page.tsx` 改为服务端组件，读取会话后已登录 `redirect("/dashboard")`
   - [ ] 2.2 登录、注册表单去掉 `useSession` 驱动的整页 Loader

@@ -1,131 +1,118 @@
 import { useForm } from "@tanstack/react-form";
+import { AUTH_MESSAGES, signInSchema } from "@zyk-admin-ai/auth/username";
 import { Button } from "@zyk-admin-ai/ui/components/button";
-import { Input } from "@zyk-admin-ai/ui/components/input";
-import { Label } from "@zyk-admin-ai/ui/components/label";
 import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { toast } from "sonner";
-import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { signInErrorMessage } from "@/lib/auth-errors";
 
+import FormTextField from "./form-text-field";
 import Loader from "./loader";
 
-export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
-  const router = useRouter();
-  const { isPending } = authClient.useSession();
+const selectSubmitState = (state: {
+	canSubmit: boolean;
+	isSubmitting: boolean;
+}) => ({
+	canSubmit: state.canSubmit,
+	isSubmitting: state.isSubmitting,
+});
 
-  const form = useForm({
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    onSubmit: async ({ value }) => {
-      await authClient.signIn.email(
-        {
-          email: value.email,
-          password: value.password,
-        },
-        {
-          onSuccess: () => {
-            router.push("/dashboard");
-            toast.success("Sign in successful");
-          },
-          onError: (error) => {
-            toast.error(error.error.message || error.error.statusText);
-          },
-        },
-      );
-    },
-    validators: {
-      onSubmit: z.object({
-        email: z.email("Invalid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
-      }),
-    },
-  });
+export default function SignInForm({
+	onSwitchToSignUp,
+}: {
+	onSwitchToSignUp: () => void;
+}) {
+	const router = useRouter();
+	const { isPending } = authClient.useSession();
 
-  if (isPending) {
-    return <Loader />;
-  }
+	const form = useForm({
+		defaultValues: {
+			password: "",
+			username: "",
+		},
+		onSubmit: async ({ value }) => {
+			let result: Awaited<ReturnType<typeof authClient.signIn.username>>;
+			try {
+				result = await authClient.signIn.username({
+					password: value.password,
+					username: value.username.trim(),
+				});
+			} catch {
+				toast.error(AUTH_MESSAGES.networkError);
+				return;
+			}
+			if (result.error) {
+				toast.error(signInErrorMessage(result.error));
+				return;
+			}
+			toast.success("登录成功");
+			router.push("/dashboard");
+		},
+		validators: {
+			onSubmit: signInSchema,
+		},
+	});
 
-  return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
+	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		event.stopPropagation();
+		form.handleSubmit();
+	};
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          form.handleSubmit();
-        }}
-        className="space-y-4"
-      >
-        <div>
-          <form.Field name="email">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="email"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
-          </form.Field>
-        </div>
+	if (isPending) {
+		return <Loader />;
+	}
 
-        <div>
-          <form.Field name="password">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="password"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
-                    {error?.message}
-                  </p>
-                ))}
-              </div>
-            )}
-          </form.Field>
-        </div>
+	return (
+		<div className="mx-auto mt-10 w-full max-w-md p-6">
+			<h1 className="mb-6 text-center font-bold text-3xl">登录</h1>
 
-        <form.Subscribe
-          selector={(state) => ({ canSubmit: state.canSubmit, isSubmitting: state.isSubmitting })}
-        >
-          {({ canSubmit, isSubmitting }) => (
-            <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Sign In"}
-            </Button>
-          )}
-        </form.Subscribe>
-      </form>
+			<form className="space-y-4" noValidate onSubmit={handleSubmit}>
+				<form.Field name="username">
+					{(field) => (
+						<FormTextField
+							autoComplete="username"
+							field={field}
+							label="用户名"
+						/>
+					)}
+				</form.Field>
 
-      <div className="mt-4 text-center">
-        <Button
-          variant="link"
-          onClick={onSwitchToSignUp}
-          className="text-indigo-600 hover:text-indigo-800"
-        >
-          Need an account? Sign Up
-        </Button>
-      </div>
-    </div>
-  );
+				<form.Field name="password">
+					{(field) => (
+						<FormTextField
+							autoComplete="current-password"
+							field={field}
+							label="密码"
+							type="password"
+						/>
+					)}
+				</form.Field>
+
+				<form.Subscribe selector={selectSubmitState}>
+					{({ canSubmit, isSubmitting }) => (
+						<Button
+							className="w-full"
+							disabled={!canSubmit || isSubmitting}
+							type="submit"
+						>
+							{isSubmitting ? "登录中..." : "登录"}
+						</Button>
+					)}
+				</form.Subscribe>
+			</form>
+
+			<div className="mt-4 text-center">
+				<Button
+					className="text-indigo-600 hover:text-indigo-800"
+					onClick={onSwitchToSignUp}
+					variant="link"
+				>
+					没有账号？去注册
+				</Button>
+			</div>
+		</div>
+	);
 }

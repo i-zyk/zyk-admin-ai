@@ -18,3 +18,17 @@ const SIGN_UP_ERROR_MESSAGES: Record<string, string> = {
 export const signUpErrorMessage = (error: AuthClientError): string =>
 	(error.code && SIGN_UP_ERROR_MESSAGES[error.code]) ||
 	AUTH_MESSAGES.signUpFailed;
+
+// Credential failures share one message so responses never reveal whether a
+// username exists or merely failed validation.
+const SIGN_IN_CREDENTIAL_ERRORS = new Set([
+	"INVALID_USERNAME",
+	"INVALID_USERNAME_OR_PASSWORD",
+	"USERNAME_TOO_LONG",
+	"USERNAME_TOO_SHORT",
+]);
+
+export const signInErrorMessage = (error: AuthClientError): string =>
+	error.code && SIGN_IN_CREDENTIAL_ERRORS.has(error.code)
+		? AUTH_MESSAGES.invalidCredentials
+		: AUTH_MESSAGES.signInFailed;
