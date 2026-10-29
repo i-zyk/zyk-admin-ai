@@ -14,13 +14,13 @@
 
 ## 验收标准
 
-- [ ] R03-AC1：`/dashboard` 显示当前登录用户的用户名（注册时输入的原始大小写），页面和 Header 中不显示占位邮箱
-- [ ] R03-AC2：`/dashboard` 显示「退出登录」按钮，点击后清除登录状态并跳转到 `/login`
-- [ ] R03-AC3：退出登录后再访问 `/dashboard` 会跳转到 `/login`；退出前获取的会话 Cookie 不能再访问受保护接口（返回 `UNAUTHORIZED`）
-- [ ] R03-AC4：未登录用户直接访问 `/dashboard` 时跳转到 `/login`
-- [ ] R03-AC5：会话已过期（数据库中 `session.expiresAt` 早于当前时间）的用户访问 `/dashboard` 时跳转到 `/login`，调用受保护接口返回 `UNAUTHORIZED`
-- [ ] R03-AC6：受保护接口（`privateData`）在服务端检查会话，无会话或会话无效时返回 `UNAUTHORIZED`，有效会话时返回当前用户的用户名
-- [ ] R03-AC7：退出请求失败（如网络异常）时提示「网络异常，请稍后重试」，可再次点击退出；退出进行中按钮禁用
+- [✅] R03-AC1：`/dashboard` 显示当前登录用户的用户名（注册时输入的原始大小写），页面和 Header 中不显示占位邮箱
+- [✅] R03-AC2：`/dashboard` 显示「退出登录」按钮，点击后清除登录状态并跳转到 `/login`
+- [✅] R03-AC3：退出登录后再访问 `/dashboard` 会跳转到 `/login`；退出前获取的会话 Cookie 不能再访问受保护接口（返回 `UNAUTHORIZED`）
+- [✅] R03-AC4：未登录用户直接访问 `/dashboard` 时跳转到 `/login`
+- [✅] R03-AC5：会话已过期（数据库中 `session.expiresAt` 早于当前时间）的用户访问 `/dashboard` 时跳转到 `/login`，调用受保护接口返回 `UNAUTHORIZED`
+- [✅] R03-AC6：受保护接口（`privateData`）在服务端检查会话，无会话或会话无效时返回 `UNAUTHORIZED`，有效会话时返回当前用户的用户名
+- [✅] R03-AC7：退出请求失败（如网络异常）时提示「网络异常，请稍后重试」，可再次点击退出；退出进行中按钮禁用
 
 ## 不在范围内
 
