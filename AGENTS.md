@@ -6,7 +6,7 @@
 
 `zyk-admin-ai` 基于 Better-T-Stack 创建，采用 **pnpm Workspace + Turborepo + TypeScript** 管理 Monorepo。当前有四个应用和五个共享包，整体为前后端分离架构：Web 与移动端共享 API 类型，独立 Hono 服务负责接口和认证，PostgreSQL 存储数据，另有独立的 Fumadocs 文档站。
 
-当前处于基础骨架阶段：已实现邮箱密码注册/登录、会话读取、受保护页面及接口、API 健康检查、主题切换和移动端导航示例。项目名称中的 `admin-ai` 不代表已具备后台权限系统或 AI 服务；目前未发现角色权限、菜单管理、租户模型、模型调用、RAG 或 Agent 业务实现。
+当前处于基础骨架阶段：已实现 Web 端用户名密码注册/登录/退出（Better Auth username 插件）、会话读取、受保护页面及接口、API 健康检查、主题切换和移动端导航示例。移动端仍是脚手架的邮箱注册/登录示例，服务端现要求注册携带用户名，移动端注册暂不可用。项目名称中的 `admin-ai` 不代表已具备后台权限系统或 AI 服务；目前未发现角色权限、菜单管理、租户模型、模型调用、RAG 或 Agent 业务实现。
 
 ## 目录结构
 
@@ -25,12 +25,15 @@ zyk-admin-ai/
 │   │   │   ├── app/                   # App Router 路由及布局
 │   │   │   │   ├── layout.tsx         # 根布局、字体、Header、Providers
 │   │   │   │   ├── page.tsx           # 首页，显示 API 连通状态
-│   │   │   │   ├── login/page.tsx     # 登录与注册表单切换
+│   │   │   │   ├── login/
+│   │   │   │   │   ├── page.tsx       # 服务端读取会话，已登录跳转 /dashboard
+│   │   │   │   │   └── auth-forms.tsx # 登录/注册表单切换（默认登录）
 │   │   │   │   └── dashboard/
-│   │   │   │       ├── page.tsx       # 服务端读取会话，未登录跳转 /login
-│   │   │   │       └── dashboard.tsx  # 客户端请求受保护接口
-│   │   │   ├── components/            # Web 专属组件、表单、主题及 Provider
-│   │   │   ├── lib/auth-client.ts     # Better Auth Web 客户端
+│   │   │   │       ├── page.tsx       # 服务端读取会话，未登录跳转 /login，显示用户名
+│   │   │   │       └── sign-out-button.tsx # 退出登录按钮
+│   │   │   ├── components/            # Web 专属组件、登录/注册表单、FormTextField、主题及 Provider
+│   │   │   ├── lib/                   # auth-client（含 usernameClient）、auth-errors（错误码→中文）、
+│   │   │   │                          # session（服务端读会话）、sign-out、use-hydrated
 │   │   │   ├── utils/trpc.ts          # tRPC 客户端、React Query 缓存及上下文
 │   │   │   ├── index.css              # 引入共享 UI 全局样式
 │   │   │   └── env.ts                 # Varlock 生成，勿手改
@@ -40,7 +43,8 @@ zyk-admin-ai/
 │   │   └── AGENTS.md                  # Next.js 子目录补充规则
 │   ├── server/                        # Hono API 服务，端口 3000
 │   │   ├── src/
-│   │   │   ├── index.ts               # HTTP 入口、日志/CORS、认证与 tRPC 路由
+│   │   │   ├── index.ts               # HTTP 入口，仅 serve(app)
+│   │   │   ├── app.ts                 # Hono 应用：日志/CORS、认证与 tRPC 路由（测试直接导入）
 │   │   │   ├── services.ts            # 创建并共享 db、auth 实例
 │   │   │   ├── context.ts             # 从请求头读取会话，构建 API Context
 │   │   │   ├── env.server.ts          # 加载 Varlock 后导出 ENV
@@ -81,13 +85,15 @@ zyk-admin-ai/
 │   │       ├── context.ts             # Context 类型：db + session
 │   │       └── routers/index.ts       # appRouter 与 AppRouter 类型导出
 │   ├── auth/                          # @zyk-admin-ai/auth：认证工厂
-│   │   └── src/index.ts               # createAuth(config, db)、Session 类型
+│   │   └── src/
+│   │       ├── index.ts               # createAuth(config, db)、Session 类型、注册钩子
+│   │       └── username.ts            # 用户名/密码规则、Zod schema、中文文案（只依赖 zod，Web 可直接导入）
 │   ├── db/                            # @zyk-admin-ai/db：数据库访问
 │   │   ├── prisma/
 │   │   │   ├── schema/
 │   │   │   │   ├── schema.prisma      # PostgreSQL 数据源、Prisma Client 生成配置
 │   │   │   │   └── auth.prisma        # User、Session、Account、Verification
-│   │   │   └── migrations/            # 迁移目录，目前仅占位文件
+│   │   │   └── migrations/            # Prisma 迁移（init：认证表 + username 字段）
 │   │   ├── src/index.ts               # createPrismaClient(config)、Database 类型
 │   │   ├── src/config.ts              # DatabaseConfig 类型
 │   │   ├── prisma.config.ts           # Schema 路径、迁移路径、连接配置
@@ -133,6 +139,7 @@ zyk-admin-ai/
 | 文档站 | Next.js 16、Fumadocs、MDX | `apps/fumadocs`；独立内容、页面、搜索、Markdown/LLM 导出 |
 | 环境配置 | Varlock | 各应用自有 `.env.schema`；Next.js/Metro 集成及服务端启动加载 |
 | 代码质量 | Ultracite 8、Biome、严格 TypeScript | 根 Biome 使用 core/react/next 预设；文档站另有本地配置 |
+| 自动化测试 | Vitest 5、Playwright | `apps/server` 用 Vitest 通过 `app.request()` 做接口集成测试；`apps/web/e2e` 用 Playwright 做 E2E，自动启动 server 与 web |
 
 各应用的 React、Next.js、TypeScript 等版本声明并不完全一致，修改依赖前检查对应包和 lockfile，不假设整个仓库使用相同版本。
 
@@ -156,26 +163,26 @@ apps/fumadocs ──> 本地 MDX 文档源（当前未接入上述业务 API）
 - `apps/web/src/utils/trpc.ts` 使用 `createTRPCContext<AppRouter>()`、`httpBatchLink` 和 React Query；浏览器复用 QueryClient，服务端调用创建新的 QueryClient。
 - tRPC 请求地址来自 `NEXT_PUBLIC_SERVER_URL`，浏览器请求设置 `credentials: "include"`，携带会话 Cookie。
 - `apps/web/src/components/providers.tsx` 装配主题、QueryClientProvider、TRPCProvider、查询开发工具和 Toaster。
-- `/dashboard` 的服务端页面转发请求头调用认证服务获取会话，缺少用户时跳转 `/login`；客户端组件再调用 `privateData`。
+- `/dashboard` 与 `/login` 的服务端页面通过 `apps/web/src/lib/session.ts` 的 `getSessionUser()` 转发请求头获取会话：`/dashboard` 无用户跳转 `/login`，`/login` 有用户跳转 `/dashboard`；认证服务不可达按未登录处理。
 - Next.js Web 当前没有承载业务 API Route Handler；认证和业务 API 由独立 Hono 服务提供。文档站自身的搜索等 Route Handler 属于文档站功能。
 
 ### 服务端与共享接口
 
 - `apps/server/src/services.ts` 是实例装配入口：`createPrismaClient(ENV)` 创建数据库客户端，再通过 `createAuth(ENV, db)` 创建认证实例。
-- Hono 入口挂载日志和 CORS；`GET /` 返回 `OK`，`GET/POST /api/auth/*` 委托 Better Auth，`/trpc/*` 委托 tRPC Router。
+- Hono 应用（`src/app.ts`）挂载日志和 CORS；`GET /` 返回 `OK`，`GET/POST /api/auth/*` 委托 Better Auth，`/trpc/*` 委托 tRPC Router。
 - `apps/server/src/context.ts` 用请求头调用 `auth.api.getSession()`，向 API 注入数据库和会话。`packages/api` 只定义 Context 类型，不自行加载应用环境变量。
 - `packages/api/src/index.ts` 提供公开与受保护 procedure。`protectedProcedure` 仅检查会话是否存在，失败返回 `UNAUTHORIZED`；当前未实现角色/资源级权限判断。
-- 目前 Router 只有公开的 `healthCheck` 和受保护的 `privateData`，后者返回提示及当前用户；尚无业务 CRUD 模块。
+- 目前 Router 只有公开的 `healthCheck` 和受保护的 `privateData`，后者返回 `{ message, username }`（不返回含占位邮箱的 user 对象）；尚无业务 CRUD 模块。
 - 共享包通过 `package.json` 的 exports 暴露 TypeScript 源码，由消费方编译；服务端 tsdown 构建显式打包 `@zyk-admin-ai/*` 依赖。
 
 ### 认证与数据库
 
-- `packages/auth/src/index.ts` 接收配置及数据库实例，启用邮箱密码登录和 Better Auth Expo 插件。
+- `packages/auth/src/index.ts` 接收配置及数据库实例，启用邮箱密码、Expo 插件和 username 插件（3～20 位字母数字下划线，小写规范化后唯一）。`hooks.before` 要求 `/sign-up/email` 必须带 `username`，并据此生成占位邮箱 `<小写用户名>@users.zyk-admin-ai.invalid` 和 `name`；`displayUsername` 保存原始大小写，用于展示（`toDisplayUsername`）。
 - Web 使用 Better Auth React 客户端；原生端额外使用 Expo 客户端插件和 `expo-secure-store`，并在 tRPC 请求头手动转发会话 Cookie。
 - 原生 tRPC 请求设置 `credentials: "omit"`，Expo Web 分支使用 `credentials: "include"`；两者的 Cookie 处理路径不同。
 - 认证配置包含 Web Origin、`zyk-admin-ai://`、Expo 和本地开发 Origin；Cookie 当前配置为 `sameSite: "none"`、`secure: true`、`httpOnly: true`，更改域名、协议或登录链路时需同时核对前后端配置。
 - Prisma Schema 拆为数据源/生成器配置和认证模型文件；现有模型只有 `User`、`Session`、`Account`、`Verification`。存在 `Account` 模型不表示已配置第三方 OAuth。
-- Prisma Client 输出到 `packages/db/prisma/generated/`，业务访问使用 `createPrismaClient` 与注入的 `ctx.db`。当前迁移目录只有占位文件，没有已提交的迁移历史。
+- Prisma Client 输出到 `packages/db/prisma/generated/`，业务访问使用 `createPrismaClient` 与注入的 `ctx.db`。已提交首个迁移 `init`。
 
 ### 移动端与文档站
 
@@ -214,6 +221,8 @@ apps/fumadocs ──> 本地 MDX 文档源（当前未接入上述业务 API）
 | `pnpm --filter native ios` / `pnpm --filter native android` | 构建并运行移动端开发应用 |
 | `pnpm run build` | Turbo 执行各包已声明的 build，非所有包均有构建脚本 |
 | `pnpm run check-types` | 检查已声明 check-types 脚本的包 |
+| `pnpm run test` | Turbo 执行各包 `test`（目前为 `apps/server` 的 Vitest 集成测试，需要数据库可用） |
+| `pnpm run test:e2e` | Turbo 执行各包 `test:e2e`（目前为 `apps/web` 的 Playwright E2E，自动启动或复用 3000/3001 端口的服务） |
 | `pnpm --filter fumadocs types:check` | 文档站单独生成路由类型并检查类型，其脚本名与根任务不同 |
 | `pnpm run check` / `pnpm run fix` | Ultracite 检查 / 自动修复 |
 | `pnpm run env:generate` | 重新生成各应用及 DB 的环境类型 |
@@ -232,9 +241,10 @@ Turbo 的 `build` 依赖上游 `^build`，缓存 `dist/**` 与 `.next/**`（排�
 - 跨 Web 场景复用的基础组件放 `packages/ui/src/components`，通过 `@zyk-admin-ai/ui/components/*` 导入；主题和设计 Token 统一修改 `packages/ui/src/styles/globals.css`。
 - 新增业务接口从 `packages/api/src/routers` 扩展并注册到 `appRouter`，复用现有 procedure；Hono 入口保持 HTTP 装配职责。新增输入通过 Zod 等方式在服务端验证。
 - 数据模型放 `packages/db/prisma/schema`，共享认证配置放 `packages/auth`，实例与应用环境装配留在 `apps/server`。
-- 当前没有独立的业务 service/repository 层、RBAC、AI SDK 接入或专用测试脚本/测试框架配置；后续新增时明确职责并更新本文件，勿将预留目录或 UI 消息组件描述成完整业务实现。
+- 当前没有独立的业务 service/repository 层、RBAC、AI SDK 接入；后续新增时明确职责并更新本文件，勿将预留目录或 UI 消息组件描述成完整业务实现。
 - 文档站使用自身 Biome 配置及 `types:check` 脚本，根目录检查不等价于覆盖它的所有检查。
-- 本次核对发现根 `biome.json` 中的 `nursery.useTailwindSortedClasses` 被当前实际执行的 Biome 判定为未知配置键，导致 Ultracite 检查在加载配置时退出。处理 lint 配置时先核对安装版本与规则名称；这属于现有配置问题，本次结构文档更新未修改它。
+- 测试位置：服务端集成测试放 `apps/server/src/**/*.test.ts`，导入 `src/app.ts` 的 `app`（`src/index.ts` 只负责 `serve`）；Web E2E 放 `apps/web/e2e/*.spec.ts`。测试与开发共用 `DATABASE_URL` 指向的库，用例使用随机用户名，不依赖清库。
+- 根 `biome.json` 排除了 `.agents`、`apps/fumadocs`（有自己的配置）和 Varlock 生成的 `src/env.ts`。脚手架代码仍有数百条存量 lint/格式问题，全量 `pnpm run check` 目前不通过；新改动的文件必须单独通过 `pnpm exec biome check <文件...>`。
 - 在 `apps/web` 内修改代码前，还需阅读其 `AGENTS.md`；该文件要求先查阅当前安装的 Next.js `dist/docs/` 对应指南，再编写框架代码。
 - 保留下面已有的 Ultracite 规范。架构描述应以实际源码为准，避免把脚手架配置或未来规划当作已完成能力。
 
@@ -366,3 +376,21 @@ Biome will catch most mechanical issues automatically. Focus your attention on:
 ---
 
 Most formatting and common issues are automatically fixed by Biome. Run `pnpm exec ultracite fix` before committing to ensure compliance.
+
+## 经验与踩坑
+
+- [2026-10-29][R01] 当前 Biome 2.5 已把 `nursery.useTailwindSortedClasses` 改名为 `useSortedClasses`，且 `apps/fumadocs/biome.json` 是嵌套根配置会与根配置冲突；根配置已改名规则并排除 `apps/fumadocs`，升级 Biome/Ultracite 时先核对规则名。
+- [2026-10-29][R01] 不要在根目录直接跑全量 `pnpm exec ultracite fix`：会重排 80+ 个脚手架文件（含 `.agents` 技能脚本、生成的 `env.ts`），还会删掉 `files.includes` 的 `"**"`（ultracite 预设已含）；只对本次改动的文件执行 `pnpm exec biome check --write <文件...>`。
+- [2026-10-29][R01] Prisma Client 输出目录 `packages/db/prisma/generated/` 被忽略，新克隆或清理后必须先 `pnpm run db:generate`，否则 `check-types` 和 server 测试都会因找不到 `../prisma/generated/client` 失败。
+- [2026-10-29][R01] 本机数据库在 Docker 容器 `wizardly_bell`（需手动 `docker start`），其默认 `postgres` 库属于其他项目，本项目使用 `zyk_admin_ai` 库；不要对 `postgres` 库执行迁移或 `db push`。
+- [2026-10-29][R01] Playwright `getByText("X")` 默认是忽略大小写的子串匹配（`Connected` 会命中 `Disconnected`）；断言状态文本时加 `{ exact: true }`。
+- [2026-10-29][R01] Better Auth 1.7 中 `options.hooks.before` 先于插件钩子执行，且都在端点请求体 Zod 校验之前；`/sign-up/email` 的占位 email/name 由 `packages/auth` 的 before 钩子直接写入 `ctx.body`，客户端调用 `signUp.email` 时 `email`/`name` 传空串即可。
+- [2026-10-29][R01] `pnpm run auth:generate` 会整体覆盖 `auth.prisma`（文件首行多出空行、`@@unique([username])` 追加在 `@@map` 之后），生成后检查 diff；迁移用 `cd packages/db && pnpm exec prisma migrate dev --name <名称>`（根目录 `db:migrate` 是交互式 Turbo 任务）。
+- [2026-10-29][R01] Ultracite 的 `noJsxPropsBind` 禁止在 JSX 属性里写内联箭头函数（项目虽开了 React Compiler 也照样报错）；表单输入用 `apps/web/src/components/form-text-field.tsx`，事件处理器在组件体内声明成具名函数，`form.Subscribe` 的 selector 放模块级。
+- [2026-10-29][R01] Better Auth 客户端（better-fetch）遇到网络中断会直接抛出 `fetch` 的 TypeError，而不是返回 `{ error }`；调用 `authClient.*` 时用 try/catch 提示「网络异常」，用返回的 `error.code` 映射业务错误（见 `apps/web/src/lib/auth-errors.ts`）。
+- [2026-10-29][R02] E2E 跑在 `next dev` 上，路由首次访问才编译，并行时首次跳转可能超过 Playwright 默认 5s；`playwright.config.ts` 已把 `expect.timeout` 设为 15s。公共常量与造数函数（`registerUser` 直接调 API 注册）放 `apps/web/e2e/support.ts`。
+- [2026-10-29][R02] 服务端直接渲染的客户端表单在水合前点击提交，会触发浏览器原生 GET 提交（凭据进 URL，E2E 也随机失败）；带凭据的表单用 `apps/web/src/lib/use-hydrated.ts` 的 `useHydrated()` 在水合前禁用提交按钮。
+- [2026-10-29][R03] `apps/web` 没有 `"type": "module"`，Playwright 把 E2E 编译成 CommonJS，不能用 `import.meta`；而 Ultracite 自动修复又会把 `__dirname` 改写成 `import.meta.dirname`。需要文件路径时用 `test.info().config.rootDir`（即 `apps/web/e2e` 绝对路径）。
+- [2026-10-29][R03] E2E 需要改数据库时（如让会话过期），用 `apps/web/e2e/support.ts` 的 `expireSessionsOf`：在 `packages/db` 下执行 `pnpm exec prisma db execute --stdin`，由其 `prisma.config.ts` 经 varlock 加载 `DATABASE_URL`，web 不必新增数据库依赖。
+- [2026-10-29][R03] Header 未登录按钮与登录表单提交按钮同名「登录」，E2E 按角色定位表单按钮时要限定在 `page.locator("form")` 内，否则会触发 Playwright 严格模式冲突。
+

@@ -1,27 +1,23 @@
-import { headers } from "next/headers";
+import { toDisplayUsername } from "@zyk-admin-ai/auth/username";
 import { redirect } from "next/navigation";
 
-import { authClient } from "@/lib/auth-client";
+import { getSessionUser } from "@/lib/session";
 
-import Dashboard from "./dashboard";
+import SignOutButton from "./sign-out-button";
 
 export default async function DashboardPage() {
-  const session = await authClient.getSession({
-    fetchOptions: {
-      headers: await headers(),
-      throw: true,
-    },
-  });
+	const user = await getSessionUser();
+	if (!user) {
+		redirect("/login");
+	}
 
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome {session.user.name}</p>
-      <Dashboard session={session} />
-    </div>
-  );
+	return (
+		<main className="mx-auto mt-10 w-full max-w-md space-y-6 p-6">
+			<h1 className="font-bold text-3xl">首页</h1>
+			<p>
+				欢迎，<span className="font-medium">{toDisplayUsername(user)}</span>
+			</p>
+			<SignOutButton />
+		</main>
+	);
 }

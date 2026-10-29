@@ -1,16 +1,13 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useState } from "react";
+import { getSessionUser } from "@/lib/session";
 
-import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
+import AuthForms from "./auth-forms";
 
-export default function LoginPage() {
-  const [showSignIn, setShowSignIn] = useState(false);
+export default async function LoginPage() {
+	if (await getSessionUser()) {
+		redirect("/dashboard");
+	}
 
-  return showSignIn ? (
-    <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
-  ) : (
-    <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
-  );
+	return <AuthForms />;
 }
