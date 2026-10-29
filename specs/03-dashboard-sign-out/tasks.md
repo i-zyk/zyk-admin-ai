@@ -15,6 +15,7 @@
   - [✅] 3.3 `user-menu.tsx` 显示用户名、不显示占位邮箱，退出复用 `useSignOut`
   - 对应验收标准：R03-AC1、R03-AC2、R03-AC4、R03-AC5、R03-AC7
   - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
-- [ ] 4. 编写首页与访问控制 E2E 测试（`apps/web/e2e/dashboard.spec.ts`）：以 `Alice_xxx` 注册后首页显示原始大小写用户名且页面不含占位邮箱；点击退出跳转 `/login`，再访问 `/dashboard` 被重定向到 `/login`；未登录直接访问 `/dashboard` 被重定向到 `/login`；通过 `@zyk-admin-ai/db` 把会话 `expiresAt` 改为过去后刷新 `/dashboard` 被重定向到 `/login`；用 `page.route` 让退出请求失败时提示「网络异常，请稍后重试」且仍停留在首页，恢复后再次退出成功
+- [✅] 4. 编写首页与访问控制 E2E 测试（`apps/web/e2e/dashboard.spec.ts`）：以 `Alice_xxx` 注册后首页显示原始大小写用户名且页面不含占位邮箱；点击退出跳转 `/login`，再访问 `/dashboard` 被重定向到 `/login`；未登录直接访问 `/dashboard` 被重定向到 `/login`；通过 `@zyk-admin-ai/db` 把会话 `expiresAt` 改为过去后刷新 `/dashboard` 被重定向到 `/login`；用 `page.route` 让退出请求失败时提示「网络异常，请稍后重试」且仍停留在首页，恢复后再次退出成功
   - 对应验收标准：R03-AC1 ~ R03-AC5、R03-AC7
+  - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
 - [ ] 5. 自测并对照 requirements.md 逐条验收

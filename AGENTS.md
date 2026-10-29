@@ -390,4 +390,7 @@ Most formatting and common issues are automatically fixed by Biome. Run `pnpm ex
 - [2026-10-29][R01] Better Auth 客户端（better-fetch）遇到网络中断会直接抛出 `fetch` 的 TypeError，而不是返回 `{ error }`；调用 `authClient.*` 时用 try/catch 提示「网络异常」，用返回的 `error.code` 映射业务错误（见 `apps/web/src/lib/auth-errors.ts`）。
 - [2026-10-29][R02] E2E 跑在 `next dev` 上，路由首次访问才编译，并行时首次跳转可能超过 Playwright 默认 5s；`playwright.config.ts` 已把 `expect.timeout` 设为 15s。公共常量与造数函数（`registerUser` 直接调 API 注册）放 `apps/web/e2e/support.ts`。
 - [2026-10-29][R02] 服务端直接渲染的客户端表单在水合前点击提交，会触发浏览器原生 GET 提交（凭据进 URL，E2E 也随机失败）；带凭据的表单用 `apps/web/src/lib/use-hydrated.ts` 的 `useHydrated()` 在水合前禁用提交按钮。
+- [2026-10-29][R03] `apps/web` 没有 `"type": "module"`，Playwright 把 E2E 编译成 CommonJS，不能用 `import.meta`；而 Ultracite 自动修复又会把 `__dirname` 改写成 `import.meta.dirname`。需要文件路径时用 `test.info().config.rootDir`（即 `apps/web/e2e` 绝对路径）。
+- [2026-10-29][R03] E2E 需要改数据库时（如让会话过期），用 `apps/web/e2e/support.ts` 的 `expireSessionsOf`：在 `packages/db` 下执行 `pnpm exec prisma db execute --stdin`，由其 `prisma.config.ts` 经 varlock 加载 `DATABASE_URL`，web 不必新增数据库依赖。
+- [2026-10-29][R03] Header 未登录按钮与登录表单提交按钮同名「登录」，E2E 按角色定位表单按钮时要限定在 `page.locator("form")` 内，否则会触发 Playwright 严格模式冲突。
 
