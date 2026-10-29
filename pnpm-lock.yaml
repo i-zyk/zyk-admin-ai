@@ -527,6 +527,9 @@ importers:
       '@zyk-admin-ai/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@zyk-admin-ai/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@zyk-admin-ai/ui':
         specifier: workspace:*
         version: link:../../packages/ui

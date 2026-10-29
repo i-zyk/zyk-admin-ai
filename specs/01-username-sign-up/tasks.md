@@ -19,11 +19,12 @@
 - [✅] 3. 编写服务端注册接口测试（`apps/server/src/auth.test.ts`）：合法注册返回 200 且带会话 Cookie；缺少用户名、用户名过短/过长、含非法字符（如 `a.b`、`中文`）、密码少于 8 位均返回 400；已有 `Alice` 后注册 `alice` 被拒绝；数据库中 `username` 为小写、`account.password` 不等于明文
   - 对应验收标准：R01-AC6、R01-AC7、R01-AC8
   - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
-- [ ] 4. Web 注册表单改造
-  - [ ] 4.1 `apps/web/package.json` 增加 `@zyk-admin-ai/auth` 依赖；`auth-client.ts` 加 `usernameClient()`
-  - [ ] 4.2 新增 `apps/web/src/lib/auth-errors.ts`：Better Auth 错误码与网络错误到中文提示的映射
-  - [ ] 4.3 `sign-up-form.tsx` 改为只有用户名、密码两项，使用共享 Zod schema 显示字段错误；提交中禁用按钮并显示加载文案；成功后跳转 `/dashboard`；失败按映射提示；网络异常提示「网络异常，请稍后重试」并可重新提交
+- [✅] 4. Web 注册表单改造
+  - [✅] 4.1 `apps/web/package.json` 增加 `@zyk-admin-ai/auth` 依赖；`auth-client.ts` 加 `usernameClient()`
+  - [✅] 4.2 新增 `apps/web/src/lib/auth-errors.ts`：Better Auth 错误码与网络错误到中文提示的映射
+  - [✅] 4.3 `sign-up-form.tsx` 改为只有用户名、密码两项，使用共享 Zod schema 显示字段错误；提交中禁用按钮并显示加载文案；成功后跳转 `/dashboard`；失败按映射提示；网络异常提示「网络异常，请稍后重试」并可重新提交
   - 对应验收标准：R01-AC1 ~ R01-AC5、R01-AC9 ~ R01-AC11
+  - CR：Codex 提出 0 条，采纳 0 条；不采纳：无
 - [ ] 5. 编写注册 E2E 测试（`apps/web/e2e/sign-up.spec.ts`）：表单只有用户名、密码两个输入框；合法注册后跳转 `/dashboard`；空提交显示必填提示且无注册请求；非法用户名、短密码显示提示；仅大小写不同的重复用户名提示「用户名已存在」；拦截注册请求使其挂起时按钮禁用、多次点击只发 1 次请求；用 `page.route` 模拟网络中断时提示「网络异常，请稍后重试」，恢复后再次提交成功；模拟服务端 500 时显示中文错误提示
   - 对应验收标准：R01-AC1 ~ R01-AC6、R01-AC9 ~ R01-AC11
 - [ ] 6. 自测并对照 requirements.md 逐条验收

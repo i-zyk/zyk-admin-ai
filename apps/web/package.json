@@ -19,6 +19,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "@varlock/nextjs-integration": "1.2.5",
     "@zyk-admin-ai/api": "workspace:*",
+    "@zyk-admin-ai/auth": "workspace:*",
     "@zyk-admin-ai/ui": "workspace:*",
     "babel-plugin-react-compiler": "^1.0.0",
     "better-auth": "catalog:",

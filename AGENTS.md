@@ -381,4 +381,6 @@ Most formatting and common issues are automatically fixed by Biome. Run `pnpm ex
 - [2026-10-29][R01] Playwright `getByText("X")` 默认是忽略大小写的子串匹配（`Connected` 会命中 `Disconnected`）；断言状态文本时加 `{ exact: true }`。
 - [2026-10-29][R01] Better Auth 1.7 中 `options.hooks.before` 先于插件钩子执行，且都在端点请求体 Zod 校验之前；`/sign-up/email` 的占位 email/name 由 `packages/auth` 的 before 钩子直接写入 `ctx.body`，客户端调用 `signUp.email` 时 `email`/`name` 传空串即可。
 - [2026-10-29][R01] `pnpm run auth:generate` 会整体覆盖 `auth.prisma`（文件首行多出空行、`@@unique([username])` 追加在 `@@map` 之后），生成后检查 diff；迁移用 `cd packages/db && pnpm exec prisma migrate dev --name <名称>`（根目录 `db:migrate` 是交互式 Turbo 任务）。
+- [2026-10-29][R01] Ultracite 的 `noJsxPropsBind` 禁止在 JSX 属性里写内联箭头函数（项目虽开了 React Compiler 也照样报错）；表单输入用 `apps/web/src/components/form-text-field.tsx`，事件处理器在组件体内声明成具名函数，`form.Subscribe` 的 selector 放模块级。
+- [2026-10-29][R01] Better Auth 客户端（better-fetch）遇到网络中断会直接抛出 `fetch` 的 TypeError，而不是返回 `{ error }`；调用 `authClient.*` 时用 try/catch 提示「网络异常」，用返回的 `error.code` 映射业务错误（见 `apps/web/src/lib/auth-errors.ts`）。
 

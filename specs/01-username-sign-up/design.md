@@ -53,6 +53,7 @@
 | `apps/web/src/lib/auth-client.ts` | 增加 `usernameClient()` |
 | `apps/web/src/lib/auth-errors.ts` | 新增：错误映射 |
 | `apps/web/src/components/sign-up-form.tsx` | 改为用户名 + 密码，中文提示，错误映射 |
+| `apps/web/src/components/form-text-field.tsx` | 新增（实现时补充）：表单输入框 + 字段错误的复用组件，供注册/登录表单共用 |
 | `apps/web/package.json` | 增加 `@zyk-admin-ai/auth`、`@playwright/test` 及 `test:e2e` 脚本 |
 | `apps/web/playwright.config.ts`、`apps/web/e2e/sign-up.spec.ts` | 新增 E2E |
 | `package.json`、`turbo.json` | 增加 `test`、`test:e2e` 任务 |
