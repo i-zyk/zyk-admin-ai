@@ -21,7 +21,7 @@ const gotoSignIn = async (page: Page) => {
 };
 
 const submitButton = (page: Page) =>
-	page.getByRole("button", { exact: true, name: "登录" });
+	page.locator("form").getByRole("button", { exact: true, name: "登录" });
 
 const signInAs = async (page: Page, username: string, password: string) => {
 	await gotoSignIn(page);

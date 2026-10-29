@@ -6,7 +6,7 @@
 
 `zyk-admin-ai` 基于 Better-T-Stack 创建，采用 **pnpm Workspace + Turborepo + TypeScript** 管理 Monorepo。当前有四个应用和五个共享包，整体为前后端分离架构：Web 与移动端共享 API 类型，独立 Hono 服务负责接口和认证，PostgreSQL 存储数据，另有独立的 Fumadocs 文档站。
 
-当前处于基础骨架阶段：已实现邮箱密码注册/登录、会话读取、受保护页面及接口、API 健康检查、主题切换和移动端导航示例。项目名称中的 `admin-ai` 不代表已具备后台权限系统或 AI 服务；目前未发现角色权限、菜单管理、租户模型、模型调用、RAG 或 Agent 业务实现。
+当前处于基础骨架阶段：已实现 Web 端用户名密码注册/登录/退出（Better Auth username 插件）、会话读取、受保护页面及接口、API 健康检查、主题切换和移动端导航示例。移动端仍是脚手架的邮箱注册/登录示例，服务端现要求注册携带用户名，移动端注册暂不可用。项目名称中的 `admin-ai` 不代表已具备后台权限系统或 AI 服务；目前未发现角色权限、菜单管理、租户模型、模型调用、RAG 或 Agent 业务实现。
 
 ## 目录结构
 
@@ -25,12 +25,15 @@ zyk-admin-ai/
 │   │   │   ├── app/                   # App Router 路由及布局
 │   │   │   │   ├── layout.tsx         # 根布局、字体、Header、Providers
 │   │   │   │   ├── page.tsx           # 首页，显示 API 连通状态
-│   │   │   │   ├── login/page.tsx     # 登录与注册表单切换
+│   │   │   │   ├── login/
+│   │   │   │   │   ├── page.tsx       # 服务端读取会话，已登录跳转 /dashboard
+│   │   │   │   │   └── auth-forms.tsx # 登录/注册表单切换（默认登录）
 │   │   │   │   └── dashboard/
-│   │   │   │       ├── page.tsx       # 服务端读取会话，未登录跳转 /login
-│   │   │   │       └── dashboard.tsx  # 客户端请求受保护接口
-│   │   │   ├── components/            # Web 专属组件、表单、主题及 Provider
-│   │   │   ├── lib/auth-client.ts     # Better Auth Web 客户端
+│   │   │   │       ├── page.tsx       # 服务端读取会话，未登录跳转 /login，显示用户名
+│   │   │   │       └── sign-out-button.tsx # 退出登录按钮
+│   │   │   ├── components/            # Web 专属组件、登录/注册表单、FormTextField、主题及 Provider
+│   │   │   ├── lib/                   # auth-client（含 usernameClient）、auth-errors（错误码→中文）、
+│   │   │   │                          # session（服务端读会话）、sign-out、use-hydrated
 │   │   │   ├── utils/trpc.ts          # tRPC 客户端、React Query 缓存及上下文
 │   │   │   ├── index.css              # 引入共享 UI 全局样式
 │   │   │   └── env.ts                 # Varlock 生成，勿手改
@@ -82,13 +85,15 @@ zyk-admin-ai/
 │   │       ├── context.ts             # Context 类型：db + session
 │   │       └── routers/index.ts       # appRouter 与 AppRouter 类型导出
 │   ├── auth/                          # @zyk-admin-ai/auth：认证工厂
-│   │   └── src/index.ts               # createAuth(config, db)、Session 类型
+│   │   └── src/
+│   │       ├── index.ts               # createAuth(config, db)、Session 类型、注册钩子
+│   │       └── username.ts            # 用户名/密码规则、Zod schema、中文文案（只依赖 zod，Web 可直接导入）
 │   ├── db/                            # @zyk-admin-ai/db：数据库访问
 │   │   ├── prisma/
 │   │   │   ├── schema/
 │   │   │   │   ├── schema.prisma      # PostgreSQL 数据源、Prisma Client 生成配置
 │   │   │   │   └── auth.prisma        # User、Session、Account、Verification
-│   │   │   └── migrations/            # 迁移目录，目前仅占位文件
+│   │   │   └── migrations/            # Prisma 迁移（init：认证表 + username 字段）
 │   │   ├── src/index.ts               # createPrismaClient(config)、Database 类型
 │   │   ├── src/config.ts              # DatabaseConfig 类型
 │   │   ├── prisma.config.ts           # Schema 路径、迁移路径、连接配置
@@ -158,7 +163,7 @@ apps/fumadocs ──> 本地 MDX 文档源（当前未接入上述业务 API）
 - `apps/web/src/utils/trpc.ts` 使用 `createTRPCContext<AppRouter>()`、`httpBatchLink` 和 React Query；浏览器复用 QueryClient，服务端调用创建新的 QueryClient。
 - tRPC 请求地址来自 `NEXT_PUBLIC_SERVER_URL`，浏览器请求设置 `credentials: "include"`，携带会话 Cookie。
 - `apps/web/src/components/providers.tsx` 装配主题、QueryClientProvider、TRPCProvider、查询开发工具和 Toaster。
-- `/dashboard` 的服务端页面转发请求头调用认证服务获取会话，缺少用户时跳转 `/login`；客户端组件再调用 `privateData`。
+- `/dashboard` 与 `/login` 的服务端页面通过 `apps/web/src/lib/session.ts` 的 `getSessionUser()` 转发请求头获取会话：`/dashboard` 无用户跳转 `/login`，`/login` 有用户跳转 `/dashboard`；认证服务不可达按未登录处理。
 - Next.js Web 当前没有承载业务 API Route Handler；认证和业务 API 由独立 Hono 服务提供。文档站自身的搜索等 Route Handler 属于文档站功能。
 
 ### 服务端与共享接口
@@ -167,17 +172,17 @@ apps/fumadocs ──> 本地 MDX 文档源（当前未接入上述业务 API）
 - Hono 应用（`src/app.ts`）挂载日志和 CORS；`GET /` 返回 `OK`，`GET/POST /api/auth/*` 委托 Better Auth，`/trpc/*` 委托 tRPC Router。
 - `apps/server/src/context.ts` 用请求头调用 `auth.api.getSession()`，向 API 注入数据库和会话。`packages/api` 只定义 Context 类型，不自行加载应用环境变量。
 - `packages/api/src/index.ts` 提供公开与受保护 procedure。`protectedProcedure` 仅检查会话是否存在，失败返回 `UNAUTHORIZED`；当前未实现角色/资源级权限判断。
-- 目前 Router 只有公开的 `healthCheck` 和受保护的 `privateData`，后者返回提示及当前用户；尚无业务 CRUD 模块。
+- 目前 Router 只有公开的 `healthCheck` 和受保护的 `privateData`，后者返回 `{ message, username }`（不返回含占位邮箱的 user 对象）；尚无业务 CRUD 模块。
 - 共享包通过 `package.json` 的 exports 暴露 TypeScript 源码，由消费方编译；服务端 tsdown 构建显式打包 `@zyk-admin-ai/*` 依赖。
 
 ### 认证与数据库
 
-- `packages/auth/src/index.ts` 接收配置及数据库实例，启用邮箱密码登录和 Better Auth Expo 插件。
+- `packages/auth/src/index.ts` 接收配置及数据库实例，启用邮箱密码、Expo 插件和 username 插件（3～20 位字母数字下划线，小写规范化后唯一）。`hooks.before` 要求 `/sign-up/email` 必须带 `username`，并据此生成占位邮箱 `<小写用户名>@users.zyk-admin-ai.invalid` 和 `name`；`displayUsername` 保存原始大小写，用于展示（`toDisplayUsername`）。
 - Web 使用 Better Auth React 客户端；原生端额外使用 Expo 客户端插件和 `expo-secure-store`，并在 tRPC 请求头手动转发会话 Cookie。
 - 原生 tRPC 请求设置 `credentials: "omit"`，Expo Web 分支使用 `credentials: "include"`；两者的 Cookie 处理路径不同。
 - 认证配置包含 Web Origin、`zyk-admin-ai://`、Expo 和本地开发 Origin；Cookie 当前配置为 `sameSite: "none"`、`secure: true`、`httpOnly: true`，更改域名、协议或登录链路时需同时核对前后端配置。
 - Prisma Schema 拆为数据源/生成器配置和认证模型文件；现有模型只有 `User`、`Session`、`Account`、`Verification`。存在 `Account` 模型不表示已配置第三方 OAuth。
-- Prisma Client 输出到 `packages/db/prisma/generated/`，业务访问使用 `createPrismaClient` 与注入的 `ctx.db`。当前迁移目录只有占位文件，没有已提交的迁移历史。
+- Prisma Client 输出到 `packages/db/prisma/generated/`，业务访问使用 `createPrismaClient` 与注入的 `ctx.db`。已提交首个迁移 `init`。
 
 ### 移动端与文档站
 

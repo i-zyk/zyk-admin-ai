@@ -16,6 +16,7 @@ export const AUTH_MESSAGES = {
 	passwordRequired: "请输入密码",
 	passwordTooShort: `密码至少 ${PASSWORD_MIN_LENGTH} 个字符`,
 	signInFailed: "登录失败，请稍后重试",
+	signOutFailed: "退出失败，请稍后重试",
 	signUpFailed: "注册失败，请稍后重试",
 	usernameFormat: "用户名只能包含英文字母、数字和下划线",
 	usernameLength: `用户名长度为 ${USERNAME_MIN_LENGTH}～${USERNAME_MAX_LENGTH} 个字符`,
@@ -25,6 +26,16 @@ export const AUTH_MESSAGES = {
 
 export const isValidUsername = (username: string): boolean =>
 	USERNAME_PATTERN.test(username);
+
+interface UsernameFields {
+	displayUsername?: string | null;
+	name: string;
+	username?: string | null;
+}
+
+/** The username as the user typed it at sign-up, for display. */
+export const toDisplayUsername = (user: UsernameFields): string =>
+	user.displayUsername ?? user.username ?? user.name;
 
 export const toPlaceholderEmail = (username: string): string =>
 	`${username.toLowerCase()}@${PLACEHOLDER_EMAIL_DOMAIN}`;

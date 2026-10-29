@@ -22,7 +22,7 @@ const gotoSignUp = async (page: Page) => {
 };
 
 const submitButton = (page: Page) =>
-	page.getByRole("button", { exact: true, name: "注册" });
+	page.locator("form").getByRole("button", { exact: true, name: "注册" });
 
 test("sign-up form only asks for username and password", async ({ page }) => {
 	await gotoSignUp(page);

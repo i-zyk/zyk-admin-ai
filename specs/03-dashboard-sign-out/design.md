@@ -30,6 +30,8 @@
 | `apps/web/src/app/dashboard/sign-out-button.tsx` | 新增：退出按钮 |
 | `apps/web/src/app/dashboard/dashboard.tsx` | 删除（模板示例） |
 | `apps/web/src/lib/sign-out.ts` | 新增：`useSignOut` hook（退出、跳转、错误提示、进行中状态） |
+| `apps/web/src/lib/session.ts` | 新增（实现时补充）：`getSessionUser()`，`/dashboard` 与 `/login` 共用 |
+| `packages/auth/src/username.ts` | 新增（实现时补充）：`toDisplayUsername()`、`signOutFailed` 文案，供页面、Header 与 API 共用 |
 | `apps/web/src/components/user-menu.tsx` | 显示用户名、退出跳转 `/login`、复用 `useSignOut` |
 | `packages/api/src/routers/index.ts` | `privateData` 返回 `{ message, username }` |
 | `apps/server/src/access.test.ts` | 新增：受保护接口与会话过期测试 |
