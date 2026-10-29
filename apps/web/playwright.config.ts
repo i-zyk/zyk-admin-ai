@@ -5,6 +5,8 @@ const SERVER_URL = "http://localhost:3000";
 const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
+	// next dev compiles each route on first visit, which can exceed the 5s default under parallel load.
+	expect: { timeout: 15_000 },
 	forbidOnly: isCI,
 	fullyParallel: true,
 	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

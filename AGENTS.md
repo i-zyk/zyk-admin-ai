@@ -383,4 +383,5 @@ Most formatting and common issues are automatically fixed by Biome. Run `pnpm ex
 - [2026-10-29][R01] `pnpm run auth:generate` 会整体覆盖 `auth.prisma`（文件首行多出空行、`@@unique([username])` 追加在 `@@map` 之后），生成后检查 diff；迁移用 `cd packages/db && pnpm exec prisma migrate dev --name <名称>`（根目录 `db:migrate` 是交互式 Turbo 任务）。
 - [2026-10-29][R01] Ultracite 的 `noJsxPropsBind` 禁止在 JSX 属性里写内联箭头函数（项目虽开了 React Compiler 也照样报错）；表单输入用 `apps/web/src/components/form-text-field.tsx`，事件处理器在组件体内声明成具名函数，`form.Subscribe` 的 selector 放模块级。
 - [2026-10-29][R01] Better Auth 客户端（better-fetch）遇到网络中断会直接抛出 `fetch` 的 TypeError，而不是返回 `{ error }`；调用 `authClient.*` 时用 try/catch 提示「网络异常」，用返回的 `error.code` 映射业务错误（见 `apps/web/src/lib/auth-errors.ts`）。
+- [2026-10-29][R02] E2E 跑在 `next dev` 上，路由首次访问才编译，并行时首次跳转可能超过 Playwright 默认 5s；`playwright.config.ts` 已把 `expect.timeout` 设为 15s。公共常量与造数函数（`registerUser` 直接调 API 注册）放 `apps/web/e2e/support.ts`。
 

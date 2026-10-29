@@ -1,37 +1,24 @@
-import { expect, type Page, type Request, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
-const SERVER_URL = "http://localhost:3000";
-const WEB_ORIGIN = "http://localhost:3001";
+import {
+	countPosts,
+	DASHBOARD_PATH,
+	fillCredentials,
+	LOGIN_PATH,
+	registerUser,
+	uniqueUsername,
+	VALID_PASSWORD,
+	WEB_ORIGIN,
+} from "./support";
+
 const SIGN_UP_URL = "**/api/auth/sign-up/email";
-const VALID_PASSWORD = "password123";
-const DASHBOARD_PATH = /\/dashboard$/;
-const LOGIN_PATH = /\/login$/;
 
-const uniqueUsername = (prefix: string): string =>
-	`${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-
-const isSignUpPost = (request: Request): boolean =>
-	request.method() === "POST" && request.url().endsWith("/sign-up/email");
-
-const countSignUpPosts = (page: Page): (() => number) => {
-	let count = 0;
-	page.on("request", (request) => {
-		if (isSignUpPost(request)) {
-			count += 1;
-		}
-	});
-	return () => count;
-};
+const countSignUpPosts = (page: Page) => countPosts(page, "/sign-up/email");
 
 const gotoSignUp = async (page: Page) => {
 	await page.goto("/login");
 	await page.getByRole("button", { name: "没有账号？去注册" }).click();
 	await expect(page.getByRole("heading", { name: "创建账号" })).toBeVisible();
-};
-
-const fillSignUp = async (page: Page, username: string, password: string) => {
-	await page.getByLabel("用户名").fill(username);
-	await page.getByLabel("密码").fill(password);
 };
 
 const submitButton = (page: Page) =>
@@ -51,7 +38,7 @@ test("valid sign-up signs the user in and opens the dashboard", async ({
 }) => {
 	await gotoSignUp(page);
 
-	await fillSignUp(page, uniqueUsername("New"), VALID_PASSWORD);
+	await fillCredentials(page, uniqueUsername("New"), VALID_PASSWORD);
 	await submitButton(page).click();
 
 	await expect(page).toHaveURL(DASHBOARD_PATH);
@@ -76,7 +63,7 @@ test("invalid username and short password show field errors", async ({
 	const signUpPosts = countSignUpPosts(page);
 	await gotoSignUp(page);
 
-	await fillSignUp(page, "a.b", "1234567");
+	await fillCredentials(page, "a.b", "1234567");
 	await submitButton(page).click();
 
 	await expect(
@@ -84,7 +71,7 @@ test("invalid username and short password show field errors", async ({
 	).toBeVisible();
 	await expect(page.getByText("密码至少 8 个字符")).toBeVisible();
 
-	await fillSignUp(page, "ab", VALID_PASSWORD);
+	await fillCredentials(page, "ab", VALID_PASSWORD);
 	await submitButton(page).click();
 
 	await expect(page.getByText("用户名长度为 3～20 个字符")).toBeVisible();
@@ -96,14 +83,10 @@ test("a username differing only by case is reported as taken", async ({
 	request,
 }) => {
 	const username = uniqueUsername("Alice");
-	const existing = await request.post(`${SERVER_URL}/api/auth/sign-up/email`, {
-		data: { password: VALID_PASSWORD, username },
-		headers: { Origin: WEB_ORIGIN },
-	});
-	expect(existing.ok()).toBe(true);
+	await registerUser(request, username);
 	await gotoSignUp(page);
 
-	await fillSignUp(page, username.toLowerCase(), VALID_PASSWORD);
+	await fillCredentials(page, username.toLowerCase(), VALID_PASSWORD);
 	await submitButton(page).click();
 
 	await expect(page.getByText("用户名已存在")).toBeVisible();
@@ -126,7 +109,7 @@ test("the submit button is disabled while a sign-up is in flight", async ({
 	});
 	await gotoSignUp(page);
 
-	await fillSignUp(page, uniqueUsername("Busy"), VALID_PASSWORD);
+	await fillCredentials(page, uniqueUsername("Busy"), VALID_PASSWORD);
 	await submitButton(page).click();
 
 	const pendingButton = page.getByRole("button", { name: "注册中..." });
@@ -149,7 +132,7 @@ test("a network failure shows a retryable error", async ({ page }) => {
 	});
 	await gotoSignUp(page);
 
-	await fillSignUp(page, uniqueUsername("Retry"), VALID_PASSWORD);
+	await fillCredentials(page, uniqueUsername("Retry"), VALID_PASSWORD);
 	await submitButton(page).click();
 
 	await expect(page.getByText("网络异常，请稍后重试")).toBeVisible();
@@ -181,7 +164,7 @@ test("an unexpected server error shows a readable message", async ({
 	});
 	await gotoSignUp(page);
 
-	await fillSignUp(page, uniqueUsername("Oops"), VALID_PASSWORD);
+	await fillCredentials(page, uniqueUsername("Oops"), VALID_PASSWORD);
 	await submitButton(page).click();
 
 	await expect(page.getByText("注册失败，请稍后重试")).toBeVisible();
